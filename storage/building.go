@@ -22,7 +22,7 @@ type Building struct {
 	Number_floors        int8   `json:"number_floors" db:"number_floors"`
 	Number_floors_ground int8   `json:"number_floors_ground" db:"number_floors_ground"`
 	Created_at           string `json:"created_at" db:"created_at"`
-	Discarded            string `json:"discarded" db:"discarded" `
+	Discarded            bool   `json:"discarded" db:"discarded" `
 }
 
 type Floor struct {
@@ -80,6 +80,25 @@ func (b *BuildingStorage) CreateNewFloor(data Floor) (int, error) {
 	return int(id), nil
 }
 
+func (b *BuildingStorage) CreateNewCharge(data Charge) (int, error) {
+	query, values, err := InsertQueryStr(data)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := b.Conn.Exec(fmt.Sprintf(`INSERT INTO charge %s`, query), values...)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(id), nil
+}
+
 func (b *BuildingStorage) GetFloor(Id int64) (Floor, error) {
 	var floor Floor
 
@@ -98,4 +117,24 @@ func (b *BuildingStorage) GetFloor(Id int64) (Floor, error) {
 	}
 
 	return floor, nil
+}
+
+func (b *BuildingStorage) GetCharge(Id int64) (Charge, error) {
+	var charge Charge
+
+	cQuery, err := GetPureFieldStr(Charge{})
+	if err != nil {
+		return Charge{}, err
+	}
+
+	query := fmt.Sprintf("SELECT %s FROM floor WHERE id = ?", cQuery)
+	err = b.Conn.Get(&charge, query, Id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return Charge{}, nil
+		}
+		return Charge{}, err
+	}
+
+	return charge, nil
 }
