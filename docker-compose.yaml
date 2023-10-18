@@ -10,8 +10,8 @@ services:
   my-mysql:
     image: mysql:latest
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_ROOT_USER: root
+      MYSQL_ROOT_PASSWORD: 1234qwer!
+      MYSQL_ROOT_USER: 1234qwer!
     ports:
       - "3306:3306"
     
