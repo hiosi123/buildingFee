@@ -39,6 +39,7 @@ type Floor struct {
 type Charge struct {
 	Id               *int64   `json:"id" db:"id"`
 	Year             *string  `json:"year" db:"year"`
+	Month            *string  `json:"month" db:"month"`
 	Date             *string  `json:"date" db:"date"`
 	Electric_measure *float32 `json:"electric_measure" db:"electric_measure"`
 	Water_measure    *float32 `json:"water_measure" db:"water_measure"`
