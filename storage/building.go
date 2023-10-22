@@ -37,14 +37,17 @@ type Floor struct {
 }
 
 type Charge struct {
-	Id               *int64   `json:"id" db:"id"`
-	Year             *string  `json:"year" db:"year"`
-	Month            *string  `json:"month" db:"month"`
-	Date             *string  `json:"date" db:"date"`
-	Electric_measure *float32 `json:"electric_measure" db:"electric_measure"`
-	Water_measure    *float32 `json:"water_measure" db:"water_measure"`
-	Created_at       *string  `json:"created_at" db:"created_at"`
-	Floor_id         *int64   `json:"floor_id" db:"floor_id"`
+	Id                  *int64   `json:"id" db:"id"`
+	Year                *string  `json:"year" db:"year"`
+	Month               *string  `json:"month" db:"month"`
+	Date                *string  `json:"date" db:"date"`
+	Measure_number      *int8    `json:"measure_number" db:"measure_number"`
+	Electric_measure    *float32 `json:"electric_measure" db:"electric_measure"`
+	Electric_difference *float32 `json:"electric_difference" db:"electric_difference"`
+	Water_measure       *float32 `json:"water_measure" db:"water_measure"`
+	Water_difference    *float32 `json:"water_difference" db:"water_difference"`
+	Created_at          *string  `json:"created_at" db:"created_at"`
+	Floor_id            *int64   `json:"floor_id" db:"floor_id"`
 }
 
 func (b *BuildingStorage) GetBuilding(Id int64) (Building, error) {
@@ -95,7 +98,8 @@ func (b *BuildingStorage) GetCharge(Id int64) (Charge, error) {
 		return Charge{}, err
 	}
 
-	query := fmt.Sprintf("SELECT %s FROM floor WHERE id = ?", cQuery)
+	query := fmt.Sprintf("SELECT %s FROM charge WHERE id = ?", cQuery)
+
 	err = b.Conn.Get(&charge, query, Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -105,6 +109,44 @@ func (b *BuildingStorage) GetCharge(Id int64) (Charge, error) {
 	}
 
 	return charge, nil
+}
+
+func (b *BuildingStorage) GetLastCharge(year, month string, floorId int64, measureNumber int8) (Charge, error) {
+	var charge Charge
+
+	query := fmt.Sprintf(`
+	SELECT * FROM charge 
+	WHERE year = ? AND month = ? AND floor_id = ? AND measure_number = ?
+	`)
+
+	err := b.Conn.Get(&charge, query, year, month, floorId, measureNumber)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return charge, nil
+		}
+		return charge, err
+	}
+
+	return charge, nil
+}
+
+func (b *BuildingStorage) GetChageListByDate(year, month string) ([]Charge, error) {
+	var chargeList []Charge
+
+	query := fmt.Sprintf(`
+	SELECT floor_id, SUM(electric_measure) as electric_measure, SUM(water_measure) as water_measure
+	FROM charge 
+	WHERE year = ? AND month = ?
+	GROUP BY floor_id`)
+	err := b.Conn.Select(&chargeList, query, year, month)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return []Charge{}, nil
+		}
+		return nil, err
+	}
+
+	return chargeList, nil
 }
 
 func (b *BuildingStorage) CreateNewBuilding(data Building) (int, error) {

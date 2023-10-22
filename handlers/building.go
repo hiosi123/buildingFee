@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -63,6 +64,22 @@ func (b *BuildingHandler) GetCharge(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "building": charge})
 }
 
+func (b *BuildingHandler) GetChargeListByDate(c *fiber.Ctx) error {
+	year := c.Query("year")
+	month := c.Query("month")
+
+	if len(year) > 4 || len(month) > 2 {
+		return errors.New("year should be 4 and month should be 2")
+	}
+
+	chargeList, err := b.Storage.GetChageListByDate(year, month)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{"success": true, "chargeList": chargeList})
+}
+
 func (b *BuildingHandler) CreateBuilding(c *fiber.Ctx) error {
 	var building storage.Building
 
@@ -109,8 +126,40 @@ func (b *BuildingHandler) CreateCharge(c *fiber.Ctx) error {
 		return err
 	}
 
+	year := *charge.Year
+
+	currentMonth, err := strconv.Atoi(*charge.Month)
+	if err != nil {
+		return err
+	}
+
+	lm := currentMonth - 1
+	lastMonth := strconv.Itoa(lm)
+	if len(lastMonth) == 1 {
+		lastMonth = "0" + lastMonth
+	} else if lastMonth == "00" {
+		lastMonth = "12"
+		yearInt, err := strconv.Atoi(year)
+		if err != nil {
+			return err
+		}
+		year = strconv.Itoa(yearInt - 1)
+	}
+
+	lastCharge, err := b.Storage.GetLastCharge(year, lastMonth, *charge.Floor_id, *charge.Measure_number)
+	if err != nil {
+		return err
+	}
+
 	time := GetCurrentTime()
 	charge.Created_at = &time
+
+	if lastCharge.Id != nil {
+		ed := *charge.Electric_measure - *lastCharge.Electric_measure
+		wd := *charge.Water_measure - *lastCharge.Water_measure
+		charge.Electric_difference = &ed
+		charge.Water_difference = &wd
+	}
 
 	id, err := b.Storage.CreateNewCharge(charge)
 	if err != nil {
