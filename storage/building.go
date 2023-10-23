@@ -111,7 +111,7 @@ func (b *BuildingStorage) GetCharge(Id int64) (Charge, error) {
 	return charge, nil
 }
 
-func (b *BuildingStorage) GetLastCharge(year, month string, floorId int64, measureNumber int8) (Charge, error) {
+func (b *BuildingStorage) GetChargeByInfo(year, month string, floorId int64, measureNumber int8) (Charge, error) {
 	var charge Charge
 
 	query := fmt.Sprintf(`
@@ -130,11 +130,12 @@ func (b *BuildingStorage) GetLastCharge(year, month string, floorId int64, measu
 	return charge, nil
 }
 
-func (b *BuildingStorage) GetChageListByDate(year, month string) ([]Charge, error) {
+func (b *BuildingStorage) GetChargeListByDate(year, month string) ([]Charge, error) {
 	var chargeList []Charge
 
 	query := fmt.Sprintf(`
-	SELECT floor_id, SUM(electric_measure) as electric_measure, SUM(water_measure) as water_measure
+	SELECT floor_id, SUM(electric_measure) as electric_measure, SUM(electric_difference) as electric_difference, 
+	SUM(water_measure) as water_measure, SUM(water_difference) as water_difference
 	FROM charge 
 	WHERE year = ? AND month = ?
 	GROUP BY floor_id`)

@@ -72,7 +72,7 @@ func (b *BuildingHandler) GetChargeListByDate(c *fiber.Ctx) error {
 		return errors.New("year should be 4 and month should be 2")
 	}
 
-	chargeList, err := b.Storage.GetChageListByDate(year, month)
+	chargeList, err := b.Storage.GetChargeListByDate(year, month)
 	if err != nil {
 		return err
 	}
@@ -126,8 +126,16 @@ func (b *BuildingHandler) CreateCharge(c *fiber.Ctx) error {
 		return err
 	}
 
-	year := *charge.Year
+	//중복 x
+	currentCharge, err := b.Storage.GetChargeByInfo(*charge.Year, *charge.Month, *charge.Floor_id, *charge.Measure_number)
+	if err != nil {
+		return err
+	}
+	if currentCharge.Id != nil && *currentCharge.Id != 0 {
+		return errors.New("current charge already exist")
+	}
 
+	year := *charge.Year
 	currentMonth, err := strconv.Atoi(*charge.Month)
 	if err != nil {
 		return err
@@ -146,7 +154,7 @@ func (b *BuildingHandler) CreateCharge(c *fiber.Ctx) error {
 		year = strconv.Itoa(yearInt - 1)
 	}
 
-	lastCharge, err := b.Storage.GetLastCharge(year, lastMonth, *charge.Floor_id, *charge.Measure_number)
+	lastCharge, err := b.Storage.GetChargeByInfo(year, lastMonth, *charge.Floor_id, *charge.Measure_number)
 	if err != nil {
 		return err
 	}
