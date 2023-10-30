@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/hiosi123/buildingFee/storage"
+	"github.com/hiosi123/buildingFee/utils"
 )
 
 type BuildingHandler struct {
@@ -88,7 +89,7 @@ func (b *BuildingHandler) CreateBuilding(c *fiber.Ctx) error {
 		return err
 	}
 
-	time := GetCurrentTime()
+	time := utils.GetCurrentTime()
 	building.Created_at = &time
 
 	id, err := b.Storage.CreateNewBuilding(building)
@@ -107,7 +108,7 @@ func (b *BuildingHandler) CreateFloor(c *fiber.Ctx) error {
 		return err
 	}
 
-	time := GetCurrentTime()
+	time := utils.GetCurrentTime()
 	floor.Created_at = &time
 
 	id, err := b.Storage.CreateNewFloor(floor)
@@ -159,7 +160,7 @@ func (b *BuildingHandler) CreateCharge(c *fiber.Ctx) error {
 		return err
 	}
 
-	time := GetCurrentTime()
+	time := utils.GetCurrentTime()
 	charge.Created_at = &time
 
 	if lastCharge.Id != nil {
