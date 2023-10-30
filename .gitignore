@@ -3,3 +3,6 @@
 
 # Ignore docker-compose.yaml file
 docker-compose.yaml
+
+#image
+image/
